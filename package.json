@@ -1,0 +1,45 @@
+{
+  "name": "pde_frontend",
+  "version": "0.1.0",
+  "private": true,
+  "proxy": "https://117.254.87.83:8091",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "deploy": "next start -p 2000"
+  },
+  "dependencies": {
+    "@react-google-maps/api": "^2.19.3",
+    "@reduxjs/toolkit": "^2.11.2",
+    "axios": "^0.27.2",
+    "bootstrap": "^5.2.1",
+    "crypto-js": "^4.1.1",
+    "lodash": "^4.17.21",
+    "lucide-react": "^0.562.0",
+    "moment": "^2.29.4",
+    "next": "^16.2.2",
+    "react": "^19.2.4",
+    "react-table": "^7.8.0",
+    "react-bootstrap": "^2.5.0",
+    "react-datepicker": "^9.1.0",
+    "react-dom": "^19.2.4",
+    "react-geocode": "^1.0.0-alpha.1",
+    "react-icons": "^4.6.0",
+    "react-redux": "^9.2.0",
+    "react-select": "^5.8.0",
+    "redux": "^5.0.1",
+    "sass": "^1.55.0",
+    "sharp": "^0.32.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^10.1.0",
+    "eslint-config-next": "^16.2.2",
+    "typescript": "^6.0.2",
+    "@types/react-table": "^7.7.20"
+  }
+}
