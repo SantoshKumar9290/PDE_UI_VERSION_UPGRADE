@@ -1,13 +1,13 @@
 module.exports = {
   apps: [
     {
-      name: "PDE_UI",
-      cwd: "/var/lib/jenkins/workspace/PDE-FRONTEND",
-      script: "node_modules/next/dist/bin/next",
-      args: "start -p 2000",
-      instances: 2,
+      name: "pde-app",
+      script: "app.js",   // mee entry file (server.js / index.js change cheyandi)
+      instances: "max",
       exec_mode: "cluster",
       autorestart: true,
+      watch: false,
+      max_memory_restart: "500M",
       env: {
         NODE_ENV: "production"
       }
