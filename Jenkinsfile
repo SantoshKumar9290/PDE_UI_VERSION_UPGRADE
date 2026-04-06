@@ -2,14 +2,31 @@ pipeline {
     agent any
 
     environment {
+        // Fix npm/node path issue
+        PATH = "/usr/bin:/usr/local/bin:${env.PATH}"
+
         APP_NAME = "pde_app"
         APP_DIR = "/var/lib/jenkins/apps/pde_version_upgrade"
+
         SONAR_HOST_URL = "http://10.10.120.190:9000"
         SONAR_PROJECT_KEY = "pde_version_upgrade"
         SONAR_TOKEN = credentials('sonar-token')
     }
 
     stages {
+
+        stage('Debug Node') {
+            steps {
+                sh '''
+                echo "===== DEBUG INFO ====="
+                echo "PATH=$PATH"
+                which node || true
+                which npm || true
+                node -v || true
+                npm -v || true
+                '''
+            }
+        }
 
         stage('Checkout Code') {
             steps {
@@ -44,35 +61,26 @@ pipeline {
         stage('Deploy with PM2') {
             steps {
                 sh '''
-                echo "Deploying application..."
+                echo "===== DEPLOY START ====="
 
-                # Create app directory
                 mkdir -p $APP_DIR
-
-                # Clean old deployment
                 rm -rf $APP_DIR/*
 
-                # Copy latest code
                 cp -r * $APP_DIR/
 
                 cd $APP_DIR
 
-                # Install dependencies again (safe for fresh deploy)
                 npm install
-
-                # Build again inside deploy dir
                 npm run build
 
-                # Stop old app
                 pm2 delete $APP_NAME || true
 
-                # Start Next.js app in cluster mode on port 2000
+                # Start Next.js app on port 2000 (cluster mode)
                 pm2 start npm --name "$APP_NAME" -- run deploy -i max
 
-                # Save PM2 process
                 pm2 save
 
-                echo "Deployment completed successfully!"
+                echo "===== DEPLOY SUCCESS ====="
                 '''
             }
         }
