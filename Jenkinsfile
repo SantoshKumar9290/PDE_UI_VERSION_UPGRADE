@@ -6,7 +6,6 @@ pipeline {
     }
 
     environment {
-        SONAR_HOST_URL = "http://10.10.120.20:9000"
         APP_NAME = "pde_ui"
     }
 
@@ -37,12 +36,10 @@ pipeline {
         stage('SonarQube Scan') {
             steps {
                 script {
-                    def scannerHome = tool 'SonarScanner'
+                    def scannerHome = tool 'sonar-scanner'
 
                     withSonarQubeEnv('Sonar-jenkins-token') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner
-                        """
+                        sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
             }
