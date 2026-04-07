@@ -28,12 +28,6 @@ pipeline {
             }
         }
 
-        stage('Clean Previous Build') {
-            steps {
-                sh "rm -rf .next || true"
-            }
-        }
-
         stage('Build Application') {
             steps {
                 sh "npm run build"
@@ -46,17 +40,9 @@ pipeline {
                     def scannerHome = tool 'SonarScanner'
 
                     withSonarQubeEnv('Sonar-jenkins-token') {
-                        withCredentials([string(credentialsId: 'jenkins-token', variable: 'SONAR_TOKEN')]) {
-
-                            sh """
-                                ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=pde_ui_upgrade \
-                                -Dsonar.projectName="PDE UI Upgrade" \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=$SONAR_HOST_URL \
-                                -Dsonar.login=$SONAR_TOKEN
-                            """
-                        }
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner
+                        """
                     }
                 }
             }
@@ -66,11 +52,8 @@ pipeline {
             steps {
                 sh """
                     npm install -g pm2 || true
-
                     pm2 delete ${APP_NAME} || true
-
                     pm2 start npm --name "${APP_NAME}" -- start
-
                     pm2 save
                 """
             }
@@ -82,7 +65,7 @@ pipeline {
             echo "SUCCESS: Build + SonarQube + Deployment Completed!"
         }
         failure {
-            echo "FAILED: Check Jenkins logs!"
+            echo "FAILED: Check logs!"
         }
     }
 }
