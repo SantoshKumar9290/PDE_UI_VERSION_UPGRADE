@@ -2,21 +2,18 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_USER  = 'jenkins'                      // ← Change to your server username
+        DEPLOY_USER  = 'jenkins'
         DEPLOY_HOST  = '10.10.120.189'
-        DEPLOY_PATH  = '/var/www/pde_version_upgrade' // ← Change to your deploy path
+        DEPLOY_PATH  = '/var/www/pde_version_upgrade'
         NODE_ENV     = 'production'
     }
 
     tools {
-        nodejs 'NodeJS'   // Must match name in Jenkins → Global Tool Configuration
+        nodejs 'Node20'   // ✅ Fixed — matches your Jenkins Global Tool Configuration
     }
 
     stages {
 
-        // ─────────────────────────────────────────
-        // 1. CHECKOUT
-        // ─────────────────────────────────────────
         stage('Checkout') {
             steps {
                 echo '📥 Pulling latest code...'
@@ -24,9 +21,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
-        // 2. INSTALL DEPENDENCIES
-        // ─────────────────────────────────────────
         stage('Install Dependencies') {
             steps {
                 echo '📦 Installing npm packages...'
@@ -34,9 +28,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
-        // 3. SONARQUBE SCAN  ← Your exact command
-        // ─────────────────────────────────────────
         stage('SonarQube Analysis') {
             steps {
                 echo '🔍 Running SonarQube scan...'
@@ -50,9 +41,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
-        // 4. QUALITY GATE
-        // ─────────────────────────────────────────
         stage('Quality Gate') {
             steps {
                 echo '🚦 Checking SonarQube Quality Gate...'
@@ -62,9 +50,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
-        // 5. BUILD
-        // ─────────────────────────────────────────
         stage('Build') {
             steps {
                 echo '🏗️  Building application...'
@@ -72,9 +57,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
-        // 6. DEPLOY
-        // ─────────────────────────────────────────
         stage('Deploy') {
             steps {
                 echo '🚀 Deploying to server...'
@@ -96,9 +78,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────────────────
-        // 7. PM2 CLUSTER START / RELOAD
-        // ─────────────────────────────────────────
         stage('PM2 Cluster Restart') {
             steps {
                 echo '⚙️  PM2 zero-downtime cluster reload...'
