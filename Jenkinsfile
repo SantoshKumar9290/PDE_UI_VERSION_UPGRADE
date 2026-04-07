@@ -1,6 +1,7 @@
 pipeline {
 agent any
 
+```
 environment {
     APP_NAME = "pde-ui-app"
 }
@@ -20,39 +21,20 @@ stages {
 
     stage('Install Dependencies') {
         steps {
-            sh '''
-            echo "Installing dependencies..."
-            npm install --legacy-peer-deps
-            '''
-        }
-    }
-
-    stage('Verify Node Version') {
-        steps {
-            sh '''
-            echo "Checking Node version..."
-            node -v
-            npm -v
-            '''
+            sh 'npm install --legacy-peer-deps'
         }
     }
 
     stage('Build Application') {
         steps {
-            sh '''
-            echo "Building Next.js app..."
-            npm run build
-            '''
+            sh 'npm run build'
         }
     }
 
     stage('SonarQube Analysis') {
         steps {
             withSonarQubeEnv('SonarQube') {
-                sh '''
-                echo "Running SonarQube scan..."
-                sonar-scanner
-                '''
+                sh 'sonar-scanner'
             }
         }
     }
@@ -68,12 +50,8 @@ stages {
     stage('Deploy with PM2 Cluster') {
         steps {
             sh '''
-            echo "Stopping old app..."
             pm2 delete pde-ui-app || true
-
-            echo "Starting app in cluster mode..."
             pm2 start ecosystem.config.js
-
             pm2 save
             '''
         }
@@ -82,10 +60,10 @@ stages {
 
 post {
     success {
-        echo "✅ Build + Sonar + PM2 Deployment SUCCESS"
+        echo "SUCCESS"
     }
     failure {
-        echo "❌ Pipeline FAILED"
+        echo "FAILED"
     }
 }
 ```
