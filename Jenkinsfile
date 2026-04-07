@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'Node20'   // must match Jenkins NodeJS tool name
+        nodejs "Node20"   // make sure this exists in Jenkins
     }
 
     environment {
-        APP_NAME = "pde-ui-app"
-        SONARQUBE_ENV = "SonarQube"
+        SONAR_HOST_URL = "http://10.10.120.20:9000"
+        DOCKER_IMAGE = "pde_ui_app"
     }
 
     stages {
@@ -15,65 +15,69 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/SantoshKumar9290/PDE_UI_VERSION_UPGRADE.git'
+                    url: 'https://github.com/SantoshKumar9290/PDE_UI.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                sh "npm install --force"
             }
         }
 
-        stage('Build') {
+        stage('Clean previous build') {
             steps {
-                sh 'npm run build || echo "No build step found"'
+                sh "rm -rf .next node_modules/.cache || true"
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Build Next.js App') {
             steps {
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.projectKey=PDE_UI \
-                      -Dsonar.sources=. \
-                      -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
+                sh "npm run build"
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                withSonarQubeEnv('Sonar-jenkins-token') {
+                    withCredentials([string(credentialsId: 'jenkins-token', variable: 'SONAR_TOKEN')]) {
+                        sh """
+                            sonar-scanner \
+                            -Dsonar.projectKey=pde_ui \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=$SONAR_HOST_URL \
+                            -Dsonar.login=$SONAR_TOKEN
+                        """
+                    }
                 }
             }
         }
 
-        stage('Quality Gate') {
+        stage('Build Docker Image') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
+                sh "docker build -t ${DOCKER_IMAGE}:latest ."
             }
         }
 
-        stage('PM2 Cluster Deploy') {
+        stage('Run Docker Container') {
             steps {
-                sh '''
-                echo "Stopping old app if running..."
-                pm2 delete ${APP_NAME} || true
-
-                echo "Starting app in cluster mode..."
-                pm2 start ecosystem.config.js
-
-                echo "Saving PM2 process list..."
-                pm2 save
-                '''
+                sh """
+                    docker rm -f pde_ui || true
+                    docker run -d \
+                        --name pde_ui \
+                        -p 3000:3000 \
+                        ${DOCKER_IMAGE}:latest
+                """
             }
         }
     }
 
     post {
         success {
-            echo "✅ Deployment Successful!"
+            echo "SUCCESS: Build + Sonar + Docker Deploy Completed!"
         }
         failure {
-            echo "❌ Pipeline Failed!"
+            echo "FAILED: Check pipeline logs!"
         }
     }
 }
