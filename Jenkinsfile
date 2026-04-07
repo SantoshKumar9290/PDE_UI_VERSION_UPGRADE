@@ -2,12 +2,11 @@ pipeline {
     agent any
 
     tools {
-        nodejs "Node20"   // make sure this exists in Jenkins
+        nodejs "Node20"
     }
 
     environment {
         SONAR_HOST_URL = "http://10.10.120.20:9000"
-        DOCKER_IMAGE = "pde_ui_app"
     }
 
     stages {
@@ -15,7 +14,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/SantoshKumar9290/PDE_UI.git'
+                    url: 'https://github.com/SantoshKumar9290/PDE_UI_VERSION_UPGRADE.git'
             }
         }
 
@@ -25,13 +24,13 @@ pipeline {
             }
         }
 
-        stage('Clean previous build') {
+        stage('Clean Old Build') {
             steps {
-                sh "rm -rf .next node_modules/.cache || true"
+                sh "rm -rf .next || true"
             }
         }
 
-        stage('Build Next.js App') {
+        stage('Build Application') {
             steps {
                 sh "npm run build"
             }
@@ -43,7 +42,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'jenkins-token', variable: 'SONAR_TOKEN')]) {
                         sh """
                             sonar-scanner \
-                            -Dsonar.projectKey=pde_ui \
+                            -Dsonar.projectKey=pde_ui_upgrade \
                             -Dsonar.sources=. \
                             -Dsonar.host.url=$SONAR_HOST_URL \
                             -Dsonar.login=$SONAR_TOKEN
@@ -53,20 +52,13 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t ${DOCKER_IMAGE}:latest ."
-            }
-        }
-
-        stage('Run Docker Container') {
+        stage('Run Application (PM2)') {
             steps {
                 sh """
-                    docker rm -f pde_ui || true
-                    docker run -d \
-                        --name pde_ui \
-                        -p 3000:3000 \
-                        ${DOCKER_IMAGE}:latest
+                    npm install -g pm2 || true
+                    pm2 delete pde_ui || true
+                    pm2 start npm --name "pde_ui" -- start
+                    pm2 save
                 """
             }
         }
@@ -74,10 +66,10 @@ pipeline {
 
     post {
         success {
-            echo "SUCCESS: Build + Sonar + Docker Deploy Completed!"
+            echo "SUCCESS: Build + Sonar + App Running with PM2!"
         }
         failure {
-            echo "FAILED: Check pipeline logs!"
+            echo "FAILED: Check logs!"
         }
     }
 }
