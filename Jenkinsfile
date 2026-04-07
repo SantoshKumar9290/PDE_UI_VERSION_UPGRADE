@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs "Node20"   // Make sure Node20 is configured in Jenkins
+        nodejs "Node20"   // Make sure Node20 is configured
     }
 
     environment {
@@ -27,12 +27,19 @@ pipeline {
             }
         }
 
+        stage('Clean Previous Build') {
+            steps {
+                sh "rm -rf .next || true"
+            }
+        }
+
         stage('Build Application') {
             steps {
                 sh "npm run build"
             }
         }
 
+        // ✅ SonarQube Stage (Added)
         stage('SonarQube Scan') {
             steps {
                 script {
@@ -53,8 +60,11 @@ pipeline {
             steps {
                 sh """
                     npm install -g pm2 || true
+
                     pm2 delete ${APP_NAME} || true
+
                     pm2 start npm --name "${APP_NAME}" -- start
+
                     pm2 save
                 """
             }
