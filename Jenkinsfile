@@ -7,7 +7,7 @@ environment {
 }
 
 tools {
-    nodejs "Node20Latest"
+    nodejs "Node20"
 }
 
 stages {
