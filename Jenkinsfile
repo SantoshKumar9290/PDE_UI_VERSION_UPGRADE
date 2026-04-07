@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs "Node20"
+        nodejs "Node20"   // Make sure Node20 is configured in Jenkins
     }
 
     environment {
