@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs "Node20"   // Make sure Node20 is configured
+        nodejs "Node20"   // Ensure Node20 is configured in Jenkins
     }
 
     environment {
@@ -39,7 +39,6 @@ pipeline {
             }
         }
 
-        // ✅ SonarQube Stage (Added)
         stage('SonarQube Scan') {
             steps {
                 script {
