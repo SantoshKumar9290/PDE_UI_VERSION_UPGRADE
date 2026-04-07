@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 environment {
     APP_NAME = "pde-ui-app"
 }
@@ -21,17 +20,13 @@ stages {
 
     stage('Install Dependencies') {
         steps {
-            sh '''
-            npm install --legacy-peer-deps
-            '''
+            sh 'npm install --legacy-peer-deps'
         }
     }
 
     stage('Build Application') {
         steps {
-            sh '''
-            npm run build
-            '''
+            sh 'npm run build'
         }
     }
 
@@ -70,6 +65,6 @@ post {
         echo "FAILED"
     }
 }
-```
+
 
 }
