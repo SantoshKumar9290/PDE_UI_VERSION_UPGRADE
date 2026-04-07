@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs "Node20"   // Make sure this exists in Jenkins
+        nodejs "Node20"   // Ensure this is configured in Jenkins
     }
 
     environment {
@@ -22,7 +22,7 @@ pipeline {
             steps {
                 sh """
                     rm -rf node_modules package-lock.json || true
-                    npm install
+                    npm install --legacy-peer-deps
                 """
             }
         }
