@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 environment {
     APP_NAME = "pde-ui-app"
 }
