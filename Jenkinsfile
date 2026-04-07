@@ -2,11 +2,13 @@ pipeline {
     agent any
 
     tools {
-        nodejs "Node20"
+        nodejs "Node20"            // Ensure this exists in Jenkins
+        // sonarScanner "SonarScanner"  // Optional if using tool step below
     }
 
     environment {
         SONAR_HOST_URL = "http://10.10.120.20:9000"
+        APP_NAME = "pde_ui"
     }
 
     stages {
@@ -20,11 +22,14 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh "npm install --force"
+                sh """
+                    rm -rf node_modules package-lock.json || true
+                    npm install
+                """
             }
         }
 
-        stage('Clean Old Build') {
+        stage('Clean Previous Build') {
             steps {
                 sh "rm -rf .next || true"
             }
@@ -38,15 +43,21 @@ pipeline {
 
         stage('SonarQube Scan') {
             steps {
-                withSonarQubeEnv('Sonar-jenkins-token') {
-                    withCredentials([string(credentialsId: 'jenkins-token', variable: 'SONAR_TOKEN')]) {
-                        sh """
-                            sonar-scanner \
-                            -Dsonar.projectKey=pde_ui_upgrade \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=$SONAR_HOST_URL \
-                            -Dsonar.login=$SONAR_TOKEN
-                        """
+                script {
+                    def scannerHome = tool 'SonarScanner'   // MUST match Jenkins tool name
+
+                    withSonarQubeEnv('Sonar-jenkins-token') {
+                        withCredentials([string(credentialsId: 'jenkins-token', variable: 'SONAR_TOKEN')]) {
+
+                            sh """
+                                ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=pde_ui_upgrade \
+                                -Dsonar.projectName="PDE UI Upgrade" \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url=$SONAR_HOST_URL \
+                                -Dsonar.login=$SONAR_TOKEN
+                            """
+                        }
                     }
                 }
             }
@@ -56,8 +67,11 @@ pipeline {
             steps {
                 sh """
                     npm install -g pm2 || true
-                    pm2 delete pde_ui || true
-                    pm2 start npm --name "pde_ui" -- start
+
+                    pm2 delete ${APP_NAME} || true
+
+                    pm2 start npm --name "${APP_NAME}" -- start
+
                     pm2 save
                 """
             }
@@ -66,10 +80,10 @@ pipeline {
 
     post {
         success {
-            echo "SUCCESS: Build + Sonar + App Running with PM2!"
+            echo "SUCCESS: Build + SonarQube + App Deployment Completed!"
         }
         failure {
-            echo "FAILED: Check logs!"
+            echo "FAILED: Check Jenkins console output!"
         }
     }
 }
