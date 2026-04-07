@@ -1,23 +1,15 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs "Node20"   // Jenkins lo configure chesina Node 20 tool name
-    }
-
     environment {
-        SONAR_HOST_URL = "http://10.10.120.190:9000"
         APP_NAME = "pde-ui-app"
     }
 
-    stages {
+    tools {
+        nodejs "nodejs"
+    }
 
-        stage('Check Node Version') {
-            steps {
-                sh 'node -v'
-                sh 'npm -v'
-            }
-        }
+    stages {
 
         stage('Checkout Code') {
             steps {
@@ -32,44 +24,39 @@ pipeline {
             }
         }
 
+        stage('Build Application') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('SonarQube') {
-                        sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=pde-ui \
-                        -Dsonar.projectName=pde-ui \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=$SONAR_TOKEN
-                        """
-                    }
+                withSonarQubeEnv('SonarQube') {
+                    sh 'sonar-scanner'
                 }
             }
         }
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('Build') {
+        stage('Deploy with PM2 Cluster') {
             steps {
-                sh 'npm run build || true'
-            }
-        }
+                sh '''
+                echo "Stopping existing app..."
+                pm2 delete pde-ui-app || true
 
-        stage('Deploy with PM2') {
-            steps {
-                sh """
-                pm2 delete $APP_NAME || true
-                pm2 serve build 3000 --name $APP_NAME --spa
+                echo "Starting app in cluster mode..."
+                pm2 start ecosystem.config.js
+
                 pm2 save
-                """
+                '''
             }
         }
     }
@@ -79,7 +66,7 @@ pipeline {
             echo "✅ Build + Sonar + PM2 Deployment SUCCESS"
         }
         failure {
-            echo "❌ Pipeline FAILED - Check Logs"
+            echo "❌ Pipeline FAILED"
         }
     }
 }
