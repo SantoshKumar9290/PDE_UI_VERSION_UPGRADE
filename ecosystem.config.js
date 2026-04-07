@@ -1,15 +1,14 @@
 module.exports = {
   apps: [
     {
-      name: "pde-app",
-      script: "app.js",   // mee entry file (server.js / index.js change cheyandi)
+      name: "pde-ui-app",
+      script: "npm",
+      args: "start",
       instances: "max",
       exec_mode: "cluster",
-      autorestart: true,
-      watch: false,
-      max_memory_restart: "500M",
       env: {
-        NODE_ENV: "production"
+        NODE_ENV: "production",
+        PORT: 3000
       }
     }
   ]
